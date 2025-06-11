@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Redirection lien court</title>
+<style>
+  body { font-family: Arial,sans-serif; max-width:480px; margin:2rem auto; padding:1rem; text-align:center; }
+  #message { font-size: 1.2rem; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<h1>Redirection en cours...</h1>
+<p id="message">Merci de patienter</p>
+
+<script>
+  async function redirect() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const message = document.getElementById('message');
+
+    if (!id) {
+      message.textContent = 'Erreur : identifiant manquant.';
+      return;
+    }
+
+    try {
+      const response = await fetch('links.json');
+      if (!response.ok) {
+        message.textContent = 'Erreur : impossible de récupérer les liens.';
+        return;
+      }
+      const links = await response.json();
+
+      if (!(id in links)) {
+        message.textContent = 'Erreur : lien non trouvé.';
+        return;
+      }
+
+      // Redirection vers l’URL complète
+      window.location.href = links[id];
+
+    } catch (e) {
+      message.textContent = 'Erreur réseau.';
+    }
+  }
+
+  redirect();
+</script>
+
+</body>
+</html>
