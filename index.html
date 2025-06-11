@@ -3,130 +3,61 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Créateur de lien contact avec photo et sites web</title>
+<title>Créer lien contact NFC</title>
 <style>
   body { font-family: Arial,sans-serif; max-width:480px; margin:2rem auto; padding:1rem; }
   label { display:block; margin-top:1rem; font-weight:bold; }
   input, button { width: 100%; padding:0.5rem; margin-top:0.25rem; font-size:1rem; }
   button { background:#007bff; color:#fff; border:none; border-radius:6px; cursor:pointer; }
   #linkContainer { margin-top:2rem; word-break: break-word; }
-  #websitesContainer input { margin-top:0.5rem; }
-  #addWebsiteBtn { margin-top:0.5rem; background:#28a745; }
 </style>
 </head>
 <body>
 
-<h1>Créer un lien contact NFC avec photo et sites web</h1>
+<h1>Créer un lien contact NFC</h1>
 
 <form id="contactForm">
   <label>Nom complet :
     <input type="text" id="name" required placeholder="Jean Dupont" />
   </label>
-  <label>Fonction :
-    <input type="text" id="jobTitle" placeholder="Directeur" />
-  </label>
   <label>Téléphone :
-    <input type="tel" id="phone" required placeholder="+33123456789" pattern="^\+?[0-9\s\-]{7,15}$" />
+    <input type="tel" id="phone" required placeholder="+33123456789" />
   </label>
   <label>Email :
     <input type="email" id="email" required placeholder="jean.dupont@mail.com" />
   </label>
-
-  <div id="websitesSection">
-    <label>Sites web :</label>
-    <div id="websitesContainer">
-      <input type="url" class="websiteInput" placeholder="https://exemple.com" />
-    </div>
-    <button type="button" id="addWebsiteBtn">+ Ajouter un site web</button>
-  </div>
-
-  <label>Photo (JPEG ou PNG, max 100Ko) :
-    <input type="file" id="photo" accept="image/jpeg, image/png" />
-  </label>
-
-  <button type="submit">Créer le lien contact</button>
+  <button type="submit">Créer le lien complet</button>
 </form>
 
 <div id="linkContainer" style="display:none;">
-  <p>Copiez ce lien et encodez-le dans votre carte NFC :</p>
-  <a id="generatedLink" href="#" target="_blank"></a>
+  <p>Copiez ce lien complet (à utiliser dans links.json) :</p>
+  <textarea id="fullLink" rows="3" style="width:100%;" readonly></textarea>
 </div>
 
 <script>
   const form = document.getElementById('contactForm');
   const linkContainer = document.getElementById('linkContainer');
-  const generatedLink = document.getElementById('generatedLink');
-  const addWebsiteBtn = document.getElementById('addWebsiteBtn');
-  const websitesContainer = document.getElementById('websitesContainer');
-
-  addWebsiteBtn.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'url';
-    input.className = 'websiteInput';
-    input.placeholder = 'https://exemple.com';
-    websitesContainer.appendChild(input);
-  });
+  const fullLink = document.getElementById('fullLink');
 
   form.addEventListener('submit', e => {
     e.preventDefault();
+    const name = encodeURIComponent(form.name.value.trim());
+    const phone = encodeURIComponent(form.phone.value.trim());
+    const email = encodeURIComponent(form.email.value.trim());
 
-    const name = form.name.value.trim();
-    const jobTitle = form.jobTitle.value.trim();
-    const phone = form.phone.value.trim();
-    const email = form.email.value.trim();
-
-    if (!name || !phone || !email) {
-      alert('Veuillez remplir tous les champs obligatoires.');
-      return;
-    }
-
-    // Récupère tous les sites web valides
-    const websiteInputs = document.querySelectorAll('.websiteInput');
-    const websites = [];
-    websiteInputs.forEach(input => {
-      const url = input.value.trim();
-      if (url) websites.push(url);
-    });
-
-    const photoInput = form.photo;
-    if (photoInput.files.length > 0) {
-      const file = photoInput.files[0];
-      if (file.size > 100 * 1024) {
-        alert('La photo doit faire moins de 100 Ko.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function() {
-        const base64Image = reader.result.split(',')[1]; // retire "data:image/xxx;base64,"
-        buildLink(name, jobTitle, phone, email, websites, base64Image);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      buildLink(name, jobTitle, phone, email, websites, null);
-    }
-  });
-
-  function buildLink(name, jobTitle, phone, email, websites, base64Image) {
-    const contact = {
-      name: encodeURIComponent(name),
-      jobTitle: encodeURIComponent(jobTitle),
-      phone: encodeURIComponent(phone),
-      email: encodeURIComponent(email),
-      websites: websites.map(encodeURIComponent),
-    };
-    if (base64Image) contact.photo = base64Image;
-
-    const data = JSON.stringify(contact);
+    const data = JSON.stringify({name, phone, email});
     const b64data = btoa(data).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
     const url = `${location.origin}/contact.html?data=${b64data}`;
-    generatedLink.href = url;
-    generatedLink.textContent = url;
+
+    fullLink.value = url;
     linkContainer.style.display = 'block';
-  }
+  });
 </script>
 
 </body>
 </html>
+
 
 
 </body>
