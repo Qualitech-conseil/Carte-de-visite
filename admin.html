@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin gestion liens NFC</title>
+<style>
+  body { font-family: Arial,sans-serif; max-width:600px; margin:2rem auto; padding:1rem; }
+  label, input, textarea, button { display: block; width: 100%; margin-top: 1rem; }
+  textarea { height: 150px; font-family: monospace; }
+  button { padding: 0.5rem; cursor: pointer; }
+  #status { margin-top: 1rem; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Admin gestion links.json NFC</h1>
+
+<label>Token GitHub (Personal Access Token):</label>
+<input type="password" id="token" placeholder="Saisir ton token GitHub" />
+
+<label>Nom utilisateur GitHub:</label>
+<input type="text" id="username" placeholder="Ex: mon-utilisateur" />
+
+<label>Nom du dépôt GitHub:</label>
+<input type="text" id="repo" placeholder="Ex: contact-nfc" />
+
+<label>Contenu actuel de links.json:</label>
+<textarea id="linksContent" placeholder="Chargement..." readonly></textarea>
+
+<button id="refreshBtn">Rafraîchir links.json</button>
+
+<label>Nouvel ID (6 caractères):</label>
+<input type="text" id="newId" maxlength="6" placeholder="Ex: abc123" />
+
+<label>URL complète (contact.html?data=...):</label>
+<input type="url" id="newUrl" placeholder="https://..." />
+
+<button id="addBtn">Ajouter / Mettre à jour le lien</button>
+<button id="removeBtn" style="background:#cc0000; color:#fff;">Supprimer un lien</button>
+
+<p id="status"></p>
+
+<script>
+  const tokenInput = document.getElementById('token');
+  const usernameInput = document.getElementById('username');
+  const repoInput = document.getElementById('repo');
+  const linksContent = document.getElementById('linksContent');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const newIdInput = document.getElementById('newId');
+  const newUrlInput = document.getElementById('newUrl');
+  const addBtn = document.getElementById('addBtn');
+  const removeBtn = document.getElementById('removeBtn');
+  const status = document.getElementById('status');
+
+  let currentSha = null; // SHA du fichier links.json (nécessaire pour mise à jour)
+
+  async function getLinksJson() {
+    status.textContent = 'Chargement en cours...';
+    const token = tokenInput.value.trim();
+    const username = usernameInput.value.trim();
+    const repo = repoInput.value.trim();
+
+    if (!token || !username || !repo) {
+      status.textContent = 'Veuillez remplir token, utilisateur et dépôt.';
+      return;
+    }
+
+    const url = `https://api.github.com/repos/${username}/${repo}/contents/links.json`;
+
+    try {
+      const response = await fetch(url, {
+        headers: { Authorization: `token ${token}` }
+      });
+      if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
+
+      const data = await response.json();
+      currentSha = data.sha;
+
+      const contentDecoded = atob(data.content.replace(/\n/g, ''));
+      linksContent.value = contentDecoded;
+      status.textContent = 'Fichier links.json chargé.';
+    } catch (e) {
+      status.textContent = `Erreur : ${e.message}`;
+    }
+  }
+
+  async function updateLinksJson(newContent) {
+    status.textContent = 'Mise à jour en cours...';
+
+    const token = tokenInput.value.trim();
+    const username = usernameInput.value.trim();
+    const repo = repoInput.value.trim();
+
+    if (!token || !username || !repo) {
+      status.textContent = 'Veuillez remplir token, utilisateur et dépôt.';
+      return;
+    }
+    if (!currentSha) {
+      status.textContent = 'Veuillez rafraîchir le fichier avant mise à jour.';
+      return;
+    }
+
+    const url = `https://api.github.com/repos/${username}/${repo}/contents/links.json`;
+
+    const body = {
+      message: `Mise à jour links.json via interface admin`,
+      content: btoa(unescape(encodeURIComponent(newContent))),
+      sha: currentSha
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          Authorization: `token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
+
+      const data = await response.json();
+      currentSha = data.content.sha;
+      linksContent.value = newContent;
+      status.textContent = 'Mise à jour réussie !';
+    } catch (e) {
+      status.textContent = `Erreur : ${e.message}`;
+    }
+  }
+
+  refreshBtn.addEventListener('click', getLinksJson);
+
+  addBtn.addEventListener('click', () => {
+    try {
+      let links = JSON.parse(linksContent.value || '{}');
+      const id = newIdInput.value.trim();
+      const url = newUrlInput.value.trim();
+
+      if (!id || id.length !== 6) {
+        alert('L’ID doit faire exactement 6 caractères.');
+        return;
+      }
+      if (!url) {
+        alert('L’URL est obligatoire.');
+        return;
+      }
+      links[id] = url;
+      updateLinksJson(JSON.stringify(links, null, 2));
+    } catch (e) {
+      alert('Erreur JSON : ' + e.message);
+    }
+  });
+
+  removeBtn.addEventListener('click', () => {
+    try {
+      let links = JSON.parse(linksContent.value || '{}');
+      const id = newIdInput.value.trim();
+      if (!id || id.length !== 6) {
+        alert('L’ID doit faire exactement 6 caractères.');
+        return;
+      }
+      if (!links[id]) {
+        alert('Cet ID n’existe pas.');
+        return;
+      }
+      delete links[id];
+      updateLinksJson(JSON.stringify(links, null, 2));
+    } catch (e) {
+      alert('Erreur JSON : ' + e.message);
+    }
+  });
+
+  // Au chargement : tentative auto de récupération
+  //getLinksJson();
+</script>
+
+</body>
+</html>
