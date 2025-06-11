@@ -3,27 +3,32 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Créateur de lien contact</title>
+<title>Créateur de lien contact avec photo</title>
 <style>
   body { font-family: Arial,sans-serif; max-width:480px; margin:2rem auto; padding:1rem; }
   label { display:block; margin-top:1rem; font-weight:bold; }
-  input { width: 100%; padding:0.5rem; margin-top:0.25rem; font-size:1rem; }
-  button { margin-top:1.5rem; padding:0.75rem 1.5rem; font-size:1rem; background:#007bff; color:#fff; border:none; border-radius:6px; cursor:pointer; }
-  #linkContainer { margin-top:2rem; word-break: break-all; }
+  input, button { width: 100%; padding:0.5rem; margin-top:0.25rem; font-size:1rem; }
+  button { background:#007bff; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+  #linkContainer { margin-top:2rem; word-break: break-word; }
 </style>
 </head>
 <body>
 
-<h1>Créer un lien contact NFC</h1>
+<h1>Créer un lien contact NFC avec photo</h1>
 
 <form id="contactForm">
-  <label>Nom complet :<input type="text" id="name" required placeholder="Jean Dupont"></label>
-  <label>Fonction :<input type="text" id="name" required placeholder="Fonction"></label>
-  <label>Téléphone :<input type="tel" id="phone" required placeholder="+33123456789"></label>
-  <label>Email :<input type="email" id="email" required placeholder="jean.dupont@mail.com"></label>
-  <label>Site Web<input type="email" id="email" required placeholder="www.site_web.com"></label>
-  
-  
+  <label>Nom complet :
+    <input type="text" id="name" required placeholder="Jean Dupont" />
+  </label>
+  <label>Téléphone :
+    <input type="tel" id="phone" required placeholder="+33123456789" pattern="^\+?[0-9\s\-]{7,15}$" />
+  </label>
+  <label>Email :
+    <input type="email" id="email" required placeholder="jean.dupont@mail.com" />
+  </label>
+  <label>Photo (JPEG ou PNG, max 100Ko) :
+    <input type="file" id="photo" accept="image/jpeg, image/png" />
+  </label>
   <button type="submit">Créer le lien contact</button>
 </form>
 
@@ -39,25 +44,47 @@
 
   form.addEventListener('submit', e => {
     e.preventDefault();
-    const name = encodeURIComponent(form.name.value.trim());
-    const fonction = encodeURIComponent(form.fonction.value.trim());
-    const phone = encodeURIComponent(form.phone.value.trim());
-    const email = encodeURIComponent(form.email.value.trim());
-    const siteweb = encodeURIComponent(form.siteweb.value.trim());
 
-    const data = JSON.stringify({name, fonction, phone, email, siteweb});
-    // Encodage en base64 URL safe
+    const name = form.name.value.trim();
+    const phone = form.phone.value.trim();
+    const email = form.email.value.trim();
+
+    if (!name || !phone || !email) {
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+
+    const photoInput = form.photo;
+    if (photoInput.files.length > 0) {
+      const file = photoInput.files[0];
+      if (file.size > 100 * 1024) {
+        alert('La photo doit faire moins de 100 Ko.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function() {
+        const base64Image = reader.result.split(',')[1]; // retire "data:image/xxx;base64,"
+        buildLink(name, phone, email, base64Image);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      buildLink(name, phone, email, null);
+    }
+  });
+
+  function buildLink(name, phone, email, base64Image) {
+    const contact = { name: encodeURIComponent(name), phone: encodeURIComponent(phone), email: encodeURIComponent(email) };
+    if (base64Image) contact.photo = base64Image;
+    const data = JSON.stringify(contact);
     const b64data = btoa(data).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-    // URL vers la page contact.html avec paramètre data
     const url = `${location.origin}/contact.html?data=${b64data}`;
-
     generatedLink.href = url;
     generatedLink.textContent = url;
     linkContainer.style.display = 'block';
-  });
+  }
 </script>
 
 </body>
 </html>
+
 
