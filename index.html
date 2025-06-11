@@ -18,8 +18,12 @@
 
 <form id="contactForm">
   <label>Nom complet :<input type="text" id="name" required placeholder="Jean Dupont"></label>
+  <label>Fonction :<input type="text" id="name" required placeholder="Fonction"></label>
   <label>Téléphone :<input type="tel" id="phone" required placeholder="+33123456789"></label>
   <label>Email :<input type="email" id="email" required placeholder="jean.dupont@mail.com"></label>
+  <label>Site Web<input type="email" id="email" required placeholder="www.site_web.com"></label>
+  
+  
   <button type="submit">Créer le lien contact</button>
 </form>
 
@@ -36,10 +40,12 @@
   form.addEventListener('submit', e => {
     e.preventDefault();
     const name = encodeURIComponent(form.name.value.trim());
+    const fonction = encodeURIComponent(form.fonction.value.trim());
     const phone = encodeURIComponent(form.phone.value.trim());
     const email = encodeURIComponent(form.email.value.trim());
+    const siteweb = encodeURIComponent(form.siteweb.value.trim());
 
-    const data = JSON.stringify({name, phone, email});
+    const data = JSON.stringify({name, fonction, phone, email, siteweb});
     // Encodage en base64 URL safe
     const b64data = btoa(data).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
