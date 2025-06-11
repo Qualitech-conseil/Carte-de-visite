@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ajouter un contact</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 480px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background: #f0f0f0;
+    color: #222;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  form {
+    background: white;
+    padding: 1rem 2rem 2rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  label {
+    display: block;
+    margin-top: 1rem;
+    font-weight: bold;
+  }
+  input {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.25rem;
+    font-size: 1rem;
+  }
+  button {
+    margin-top: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:disabled {
+    background-color: #999;
+  }
+  #downloadLink {
+    display: block;
+    margin-top: 2rem;
+    text-align: center;
+    font-weight: bold;
+    color: green;
+  }
+</style>
+</head>
+<body>
+
+<h1>Ajouter un contact</h1>
+
+<form id="contactForm">
+  <label for="fullName">Nom complet :</label>
+  <input type="text" id="fullName" name="fullName" placeholder="Jean Dupont" required />
+
+  <label for="phone">Téléphone :</label>
+  <input type="tel" id="phone" name="phone" placeholder="+33123456789" pattern="^\+?[0-9\s\-]{7,15}$" required />
+
+  <label for="email">Email :</label>
+  <input type="email" id="email" name="email" placeholder="exemple@mail.com" required />
+
+  <button type="submit">Générer la fiche contact</button>
+</form>
+
+<a id="downloadLink" href="#" download="contact.vcf" style="display:none;">Télécharger la fiche contact</a>
+
+<script>
+  const form = document.getElementById('contactForm');
+  const downloadLink = document.getElementById('downloadLink');
+
+  function generateVCard(fullName, phone, email) {
+    // Format minimaliste vCard 3.0
+    return `BEGIN:VCARD
+VERSION:3.0
+FN:${fullName}
+TEL;TYPE=CELL:${phone}
+EMAIL;TYPE=INTERNET:${email}
+END:VCARD`;
+  }
+
+  form.addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const fullName = form.fullName.value.trim();
+    const phone = form.phone.value.trim();
+    const email = form.email.value.trim();
+
+    if (!fullName || !phone || !email) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
+
+    const vcardData = generateVCard(fullName, phone, email);
+    const blob = new Blob([vcardData], {type: 'text/vcard'});
+
+    const url = URL.createObjectURL(blob);
+    downloadLink.href = url;
+    downloadLink.style.display = 'inline-block';
+
+    // Propose le téléchargement avec un nom de fichier dynamique
+    downloadLink.download = fullName.replace(/\s+/g, '_') + '.vcf';
+    downloadLink.textContent = `Télécharger la fiche contact de ${fullName}`;
+  });
+</script>
+
+</body>
+</html>
