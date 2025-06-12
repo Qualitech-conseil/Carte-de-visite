@@ -1,42 +1,31 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Redirection lien court local</title>
-<style>
-  body { font-family: Arial,sans-serif; max-width:480px; margin:2rem auto; padding:1rem; text-align:center; }
-  #message { font-size: 1.2rem; margin-top: 1rem; }
-</style>
-</head>
+<head><meta charset="UTF-8" /><title>Redirection</title></head>
 <body>
-
-<h1>Redirection en cours...</h1>
-<p id="message">Merci de patienter</p>
-
+<p>Redirection en cours...</p>
 <script>
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
-  const message = document.getElementById('message');
 
-  if (!id) {
-    message.textContent = 'Erreur : identifiant manquant.';
+  if(!id) {
+    document.body.innerHTML = '<p>Identifiant manquant.</p>';
   } else {
-    const linksData = localStorage.getItem('contactLinks');
-    if (!linksData) {
-      message.textContent = 'Aucun lien trouvé localement. Veuillez générer le lien depuis la page de création.';
-    } else {
-      const links = JSON.parse(linksData);
-      if (!(id in links)) {
-        message.textContent = 'Lien non trouvé dans le stockage local.';
-      } else {
-        window.location.href = links[id];
-      }
-    }
+    fetch('links.json')
+      .then(resp => resp.json())
+      .then(data => {
+        if(!data[id]) {
+          document.body.innerHTML = '<p>Lien non trouvé.</p>';
+          return;
+        }
+        window.location.href = data[id];
+      })
+      .catch(() => {
+        document.body.innerHTML = '<p>Erreur chargement JSON.</p>';
+      });
   }
 </script>
-
 </body>
 </html>
+
 
 
