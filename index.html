@@ -1,126 +1,34 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Créer lien contact NFC avec raccourcisseur local</title>
-<style>
-  body { font-family: Arial,sans-serif; max-width:480px; margin:2rem auto; padding:1rem; }
-  label { display:block; margin-top:1rem; font-weight:bold; }
-  input, button, textarea { width: 100%; padding:0.5rem; margin-top:0.25rem; font-size:1rem; }
-  button { background:#007bff; color:#fff; border:none; border-radius:6px; cursor:pointer; }
-  #linkContainer { margin-top:2rem; word-break: break-word; position: relative; }
-  #copyBtn {
-    position: absolute;
-    right: 5px;
-    top: 5px;
-    width: auto;
-    padding: 0.3rem 0.6rem;
-    font-size: 0.9rem;
-    background: #28a745;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    color: white;
-  }
-</style>
-</head>
+<head><meta charset="UTF-8" /><title>Créer lien contact NFC</title></head>
 <body>
-
-<h1>Créer un lien contact NFC avec raccourcisseur local</h1>
-
-<form id="contactForm">
-  <label>Nom complet :
-    <input type="text" id="name" required placeholder="Jean Dupont" />
-  </label>
-  <label>Téléphone :
-    <input type="tel" id="phone" required placeholder="+33123456789" />
-  </label>
-  <label>Email :
-    <input type="email" id="email" required placeholder="jean.dupont@mail.com" />
-  </label>
-  <button type="submit">Créer le lien complet et court</button>
+<h1>Créer votre lien contact NFC</h1>
+<form id="form">
+  <label>Nom complet: <input type="text" id="name" required></label><br>
+  <label>Téléphone: <input type="tel" id="phone" required></label><br>
+  <label>Email: <input type="email" id="email" required></label><br>
+  <button type="submit">Créer lien complet</button>
 </form>
-
-<div id="linkContainer" style="display:none;">
-  <p>Lien complet :</p>
-  <textarea id="fullLink" rows="3" readonly></textarea>
-  <button id="copyFullBtn">Copier</button>
-
-  <p style="margin-top:1rem;">Lien raccourci local :</p>
-  <input type="text" id="shortLink" readonly style="padding:0.5rem; font-size:1rem;" />
-  <button id="copyShortBtn">Copier</button>
-  <p style="font-size:0.85rem; color:#555; margin-top:0.2rem;">⚠️ Raccourcisseur local au navigateur uniquement.</p>
+<div id="result" style="display:none">
+  <p>Lien complet : <input type="text" id="link" readonly style="width:100%"></p>
 </div>
-
 <script>
-  const form = document.getElementById('contactForm');
-  const linkContainer = document.getElementById('linkContainer');
-  const fullLink = document.getElementById('fullLink');
-  const shortLinkInput = document.getElementById('shortLink');
-  const copyFullBtn = document.getElementById('copyFullBtn');
-  const copyShortBtn = document.getElementById('copyShortBtn');
-
-  // Génère un ID alphanumérique 6 caractères
-  function generateId() {
-    return Math.random().toString(36).substring(2, 8);
-  }
-
-  // Récupère le mapping depuis localStorage ou crée un objet vide
-  function getLinks() {
-    const data = localStorage.getItem('contactLinks');
-    return data ? JSON.parse(data) : {};
-  }
-
-  // Sauvegarde mapping dans localStorage
-  function saveLinks(obj) {
-    localStorage.setItem('contactLinks', JSON.stringify(obj));
-  }
+  const form = document.getElementById('form');
+  const result = document.getElementById('result');
+  const linkInput = document.getElementById('link');
 
   form.addEventListener('submit', e => {
     e.preventDefault();
     const name = encodeURIComponent(form.name.value.trim());
     const phone = encodeURIComponent(form.phone.value.trim());
     const email = encodeURIComponent(form.email.value.trim());
-
     const data = JSON.stringify({name, phone, email});
-    const b64data = btoa(data).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-    const fullUrl = `${location.origin}/contact.html?data=${b64data}`;
-
-    fullLink.value = fullUrl;
-
-    // Génération ID court
-    const links = getLinks();
-    let id;
-    do {
-      id = generateId();
-    } while (id in links);
-
-    links[id] = fullUrl;
-    saveLinks(links);
-
-    const shortUrl = `${location.origin}/short.html?id=${id}`;
-    shortLinkInput.value = shortUrl;
-
-    linkContainer.style.display = 'block';
+    const b64 = btoa(data);
+    const url = location.origin + location.pathname.replace(/index\.html$/, '') + 'contact.html?data=' + encodeURIComponent(b64);
+    linkInput.value = url;
+    result.style.display = 'block';
   });
-
-  function copyToClipboard(el) {
-    el.select();
-    el.setSelectionRange(0, 99999);
-    try {
-      document.execCommand('copy');
-      alert('Copié dans le presse-papier !');
-    } catch {
-      alert('Échec de la copie. Veuillez copier manuellement.');
-    }
-  }
-
-  copyFullBtn.addEventListener('click', () => copyToClipboard(fullLink));
-  copyShortBtn.addEventListener('click', () => copyToClipboard(shortLinkInput));
 </script>
-
 </body>
 </html>
 
