@@ -1,72 +1,54 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Fiche contact simple</title>
-<style>
-  body { font-family: Arial,sans-serif; max-width:480px; margin:2rem auto; padding:1rem; text-align:center; }
-  button { padding: 0.75rem 1.5rem; font-size: 1.2rem; background: #28a745; color: white; border:none; border-radius:6px; cursor:pointer; }
-  #message { margin-top: 1rem; color: red; }
-</style>
-</head>
+<head><meta charset="UTF-8" /><title>Fiche contact</title></head>
 <body>
-
 <h1>Fiche contact NFC</h1>
-<p>Cliquez sur le bouton pour télécharger la fiche contact.</p>
-
 <button id="downloadBtn">Télécharger la fiche contact</button>
-<p id="message"></p>
-
 <script>
-  function base64UrlDecode(str) {
-    str = str.replace(/-/g, '+').replace(/_/g, '/');
-    while (str.length % 4) str += '=';
-    return atob(str);
+  function base64Decode(str) {
+    return decodeURIComponent(escape(atob(str)));
   }
 
   const params = new URLSearchParams(window.location.search);
-  const dataB64 = params.get('data');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const message = document.getElementById('message');
+  const data = params.get('data');
+  const btn = document.getElementById('downloadBtn');
 
-  if (!dataB64) {
-    message.textContent = 'Erreur : données manquantes.';
-    downloadBtn.style.display = 'none';
+  if(!data) {
+    btn.textContent = 'Données manquantes';
+    btn.disabled = true;
   } else {
-    let contactData;
+    let contact;
     try {
-      const json = base64UrlDecode(dataB64);
-      contactData = JSON.parse(json);
-    } catch {
-      message.textContent = 'Erreur : données invalides.';
-      downloadBtn.style.display = 'none';
+      contact = JSON.parse(base64Decode(data));
+    } catch(e) {
+      btn.textContent = 'Données invalides';
+      btn.disabled = true;
     }
 
-    if (contactData) {
+    if(contact) {
       const vcard = `BEGIN:VCARD
 VERSION:3.0
-FN:${decodeURIComponent(contactData.name)}
-TEL;TYPE=CELL:${decodeURIComponent(contactData.phone)}
-EMAIL;TYPE=INTERNET:${decodeURIComponent(contactData.email)}
+FN:${contact.name}
+TEL;TYPE=CELL:${contact.phone}
+EMAIL;TYPE=INTERNET:${contact.email}
 END:VCARD`;
 
-      downloadBtn.addEventListener('click', () => {
+      btn.addEventListener('click', () => {
         const blob = new Blob([vcard], {type: 'text/vcard'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = decodeURIComponent(contactData.name).replace(/\s+/g, '_') + '.vcf';
+        a.download = contact.name.replace(/\s+/g, '_') + '.vcf';
         document.body.appendChild(a);
         a.click();
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        }, 100);
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       });
     }
   }
 </script>
+</body>
+</html>
 
 </body>
 </html>
