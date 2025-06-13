@@ -1,56 +1,29 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8" /><title>Fiche contact</title></head>
-<body>
-<h1>Fiche contact NFC</h1>
-<button id="downloadBtn">Télécharger la fiche contact</button>
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/><title>Fiche contact</title></head><body>
+<h1>Fiche contact</h1><button id="dl">Télécharger la fiche .vcf</button><p id="msg"></p>
 <script>
-  function base64Decode(str) {
-    return decodeURIComponent(escape(atob(str)));
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const data = params.get('data');
-  const btn = document.getElementById('downloadBtn');
-
-  if(!data) {
-    btn.textContent = 'Données manquantes';
-    btn.disabled = true;
-  } else {
-    let contact;
-    try {
-      contact = JSON.parse(base64Decode(data));
-    } catch(e) {
-      btn.textContent = 'Données invalides';
-      btn.disabled = true;
-    }
-
-    if(contact) {
-      const vcard = `BEGIN:VCARD
+function b64d(s){return decodeURIComponent(escape(atob(s))); }
+const p=new URLSearchParams(location.search).get('data'), btn=document.getElementById('dl'), msg=document.getElementById('msg');
+if(!p){btn.disabled=true;msg.innerText='→ Données manquantes';}
+else{
+  try{ var c=JSON.parse(b64d(p));}
+  catch{btn.disabled=true;msg.innerText='→ Données invalides';}
+}
+if(c){
+  const v=`BEGIN:VCARD
 VERSION:3.0
-FN:${contact.name}
-TEL;TYPE=CELL:${contact.phone}
-EMAIL;TYPE=INTERNET:${contact.email}
+FN:${c.name}
+TEL;TYPE=CELL:${c.phone}
+EMAIL;TYPE=INTERNET:${c.email}
 END:VCARD`;
+  btn.addEventListener('click',()=>{
+    const blob=new Blob([v],{type:'text/vcard'}),u=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=u;
+    a.download=c.name.replace(/\s+/g,'_')+'.vcf';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>URL.revokeObjectURL(u),500);
+  });
+}
+</script></body></html>
 
-      btn.addEventListener('click', () => {
-        const blob = new Blob([vcard], {type: 'text/vcard'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = contact.name.replace(/\s+/g, '_') + '.vcf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      });
-    }
-  }
-</script>
-</body>
-</html>
-
-</body>
-</html>
 
 
