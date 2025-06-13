@@ -1,42 +1,39 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8" /><title>Créer lien contact NFC</title></head>
-<body>
-<h1>Créer votre lien contact NFC</h1>
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/><title>Créer lien NFC</title></head><body>
+<h1>Créer un lien contact NFC</h1>
 <form id="form">
-  <label>Nom complet: <input type="text" id="name" required></label><br>
-  <label>Téléphone: <input type="tel" id="phone" required></label><br>
-  <label>Email: <input type="email" id="email" required></label><br>
-  <button type="submit">Créer lien complet</button>
+  <label>Nom : <input type="text" id="name" required></label><br>
+  <label>Tél : <input type="tel" id="phone" required></label><br>
+  <label>Email : <input type="email" id="email" required></label><br>
+  <button type="submit">Générer lien</button>
 </form>
 <div id="result" style="display:none">
-  <p>Lien complet : <input type="text" id="link" readonly style="width:100%"></p>
+  <p>🔗 Lien complet : <input type="text" id="fullLink" readonly style="width:100%"></p>
+  <p>✂️ Lien court : <input type="text" id="shortLink" readonly style="width:100%"></p>
 </div>
 <script>
-  const form = document.getElementById('form');
-  const result = document.getElementById('result');
-  const linkInput = document.getElementById('link');
+const form=document.getElementById('form'),
+      res=document.getElementById('result'),
+      fullLink=document.getElementById('fullLink'),
+      shortLink=document.getElementById('shortLink');
+function genId(){return Math.random().toString(36).substr(2,6);}
+form.addEventListener('submit',e=>{
+  e.preventDefault();
+  const n=encodeURIComponent(form.name.value.trim()),
+        p=encodeURIComponent(form.phone.value.trim()),
+        m=encodeURIComponent(form.email.value.trim());
+  const b=encodeURIComponent(btoa(JSON.stringify({name:n,phone:p,email:m}))),
+        base=location.origin+location.pathname.replace(/index\.html$/,'');
+  const full=base+'contact.html?data='+b;
+  const id=genId(); 
+  let links = {};
+  try { links=JSON.parse(localStorage.getItem('links')||'{}'); } catch {}
+  links[id]=full;
+  localStorage.setItem('links', JSON.stringify(links));
+  fullLink.value=full;
+  shortLink.value=base+'short.html?id='+id;
+  res.style.display='block';
+});
+</script></body></html>
 
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const name = encodeURIComponent(form.name.value.trim());
-    const phone = encodeURIComponent(form.phone.value.trim());
-    const email = encodeURIComponent(form.email.value.trim());
-    const data = JSON.stringify({name, phone, email});
-    const b64 = btoa(data);
-    const url = location.origin + location.pathname.replace(/index\.html$/, '') + 'contact.html?data=' + encodeURIComponent(b64);
-    linkInput.value = url;
-    result.style.display = 'block';
-  });
-</script>
-</body>
-</html>
-
-
-
-
-
-</body>
-</html>
 
 
